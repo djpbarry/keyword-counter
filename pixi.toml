@@ -13,3 +13,6 @@ pixi-pycharm = ">=0.0.12,<0.0.13"
 
 [environments]
 scanner = ["default"]
+
+[pypi-dependencies]
+pymupdf = ">=1.28.2, <2"
