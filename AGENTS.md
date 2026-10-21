@@ -91,3 +91,9 @@ in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
 - Existing style keeps all logic in module-level functions with the
   invocation at the bottom; follow that pattern if extending, but consider
   adding an entrypoint guard and CLI/`argparse` if the script grows.
+
+## Improvement backlog
+
+Planned keyword-detection improvements (regex word boundaries, term
+normalization, OCR, etc.) are tracked in `DEVELOPMENT_NOTES.md`. Read that
+before touching the matching logic.
