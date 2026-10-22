@@ -83,5 +83,9 @@ badly. Examples from the current term list:
 - [x] Item 3 (text normalization) implemented as `normalize_text`
       (`highlight_pdf.py:8`), called before matching: joins hyphenated line
       breaks, collapses whitespace, and expands `ﬁ`/`ﬂ` ligatures.
-- [ ] Items 4–7 remain open. A sensible next increment is item 4
-      (presence vs frequency).
+- [x] Item 4 (presence vs frequency) implemented: `count_keywords_in_pdf`
+      now also returns `total_words`, and the CSV writes three columns per
+      term — raw `count`, `*_mentioned` (0/1), and `*_density`
+      (`count / total_words`) — plus a `total_words` column.
+- [ ] Items 5–7 remain open (phrase support, OCR fallback, per-file error
+      handling).

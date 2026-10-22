@@ -19,8 +19,8 @@ The entire program is one script.
   - Platforms: `win-64` only (Windows-specific; hardcoded paths in the
     script are Windows drive-letter paths)
   - Python `>=3.15.0,<3.16` (very new — some packages may lack wheels)
-- **PyMuPDF** is the PDF library. The import name is `fitz`
-  (`import fitz  # PyMuPDF`).
+- **PyMuPDF** is the PDF library. Imported as `import pymupdf as fitz`
+  (the `fitz` module is the legacy alias).
 - Declared dependencies in `pixi.toml`:
   - `[dependencies]`: `python`, `pixi-pycharm`
   - `[pypi-dependencies]`: `pymupdf`
@@ -45,49 +45,56 @@ Running the script inside the Pixi environment:
 pixi run -e scanner python highlight_pdf.py
 ```
 
-Use the `scanner` environment, not `default`: `fitz`/`pymupdf` is installed
+Use the `scanner` environment, not `default`: `pymupdf`/`fitz` is installed
 in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
-`default` fails with `ModuleNotFoundError: No module named 'fitz'`.
+`default` fails with `ModuleNotFoundError: No module named 'pymupdf'`.
 
 ## Code organization
 
 `highlight_pdf.py` is the only source file. Data flow:
 
 1. `analyze_folder(folder_path, search_terms, output_csv)` opens the output
-   CSV, writes a header row (`filename` + each search term), then iterates
-   over every `*.pdf` in the folder.
+   CSV, writes a header row, then iterates over every `*.pdf` in the folder.
 2. For each PDF, `count_keywords_in_pdf(pdf_path, search_terms)` opens it
-   with `fitz`, extracts `page.get_text("text")` per page, lowercases it,
-   and uses `text.count(term.lower())` to tally each term.
-3. Results are written one row per file and the CSV is closed.
+   with `fitz`, extracts `page.get_text("text")` per page, and feeds each
+   page through `normalize_text` (joins hyphenated line breaks, collapses
+   whitespace, expands ligatures) before lowercasing.
+3. Each term is matched with a compiled regex built from its kind: `stem`
+   terms use `\bterm\w*`, `word` terms use `\bterm\b`. The function returns
+   `(keyword_counts, total_words)`.
+4. `analyze_folder` writes one row per file: `filename`, `total_words`, and
+   per term a raw `count`, a `0/1` `*_mentioned` flag, and a `*_density`
+   (`count / total_words`).
 
 ## Gotchas (non-obvious)
 
 - **Hardcoded config at the bottom of the script.** `folder_path`,
   `search_terms`, and `output_csv` are literal values in module scope
-  (`highlight_pdf.py:43-47`), not CLI args or a config file. `folder_path`
+  (`highlight_pdf.py:56-85`), not CLI args or a config file. `folder_path`
   is an absolute OneDrive path that must exist on the machine running the
   script. To change inputs/outputs, edit these values directly.
-- **Substring, not word, matching.** `text.count(term)` is case-insensitive
-  but matches substrings, so short stems match many unintended words. For
-  example `imag` matches "image", "imaging", and "imagine"; `cell` matches
-  "Excel". Results should be interpreted with this in mind. Also,
-  `str.count` does not count overlapping occurrences.
+- **Stem vs word matching is explicit.** `search_terms` is a list of
+  `(term, kind)` tuples where `kind` is `"stem"` or `"word"`
+  (`highlight_pdf.py:60`). Stems match any whole word starting with the term
+  (`\bterm\w*`), words match exactly (`\bterm\b`). This means plurals and
+  other suffixes are NOT matched for `word` terms: e.g. `script` will not
+  match "scripts", `analysis` will not match "analyses".
 - **Stale lockfile.** `pixi.lock` is currently untracked and does not yet
   reflect the `pymupdf` addition (no `pymupdf` entry). Run `pixi install`
   or `pixi update` to regenerate it after dependency changes.
 - **`.idea/` is untracked and not ignored.** `.gitignore` only ignores
   `.pixi/*` (except `config.toml`). PyCharm project files may show up as
   untracked; don't commit them.
-- **No `fitz` in `default` env** — always target `scanner` (see Commands).
+- **No `pymupdf`/`fitz` in `default` env** — always target `scanner` (see
+  Commands).
 - The script has no `if __name__ == "__main__"` guard; importing it runs the
   analysis immediately.
 
 ## Conventions
 
-- Plain procedural Python: `csv` and `os` from the standard library plus
-  `fitz` (PyMuPDF). No type hints, no docstrings beyond a few inline
-  comments.
+- Plain procedural Python: `csv`, `os`, and `re` from the standard library
+  plus `pymupdf as fitz` (PyMuPDF). No type hints, no docstrings beyond a few
+  inline comments.
 - Existing style keeps all logic in module-level functions with the
   invocation at the bottom; follow that pattern if extending, but consider
   adding an entrypoint guard and CLI/`argparse` if the script grows.

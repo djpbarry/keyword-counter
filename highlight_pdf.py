@@ -18,6 +18,7 @@ def normalize_text(text):
 def count_keywords_in_pdf(pdf_path, search_terms):
     document = fitz.open(pdf_path)
     keyword_counts = {term: 0 for term, _ in search_terms}
+    total_words = 0
 
     # Compile one regex per term: stems match whole words sharing the
     # prefix; whole words match the word exactly.
@@ -36,12 +37,13 @@ def count_keywords_in_pdf(pdf_path, search_terms):
         if text:
             # Lowercase and normalize before matching
             text = normalize_text(text.lower())
+            total_words += len(text.split())  # Tally words for density
             for term, _ in search_terms:
                 # Count whole-word occurrences (case-insensitive)
                 keyword_counts[term] += len(patterns[term].findall(text))
 
     document.close()
-    return keyword_counts
+    return keyword_counts, total_words
 
 
 def analyze_folder(folder_path, search_terms, output_csv):
@@ -49,17 +51,30 @@ def analyze_folder(folder_path, search_terms, output_csv):
     # Prepare the CSV file to store the results
     with open(output_csv, mode='w', newline='') as file:
         writer = csv.writer(file)
-        # Write the header row: filename + search terms
-        writer.writerow(['filename'] + term_names)
+        # Write the header row: filename, total word count, then for each
+        # term a raw count, a 0/1 "mentioned" flag, and a density (count /
+        # total words) so results can be compared across CVs of different
+        # lengths.
+        header = ['filename', 'total_words']
+        for term in term_names:
+            header += [term, term + '_mentioned', term + '_density']
+        writer.writerow(header)
 
         # Loop through all PDF files in the folder
         for filename in os.listdir(folder_path):
             if filename.endswith('.pdf'):
                 pdf_path = os.path.join(folder_path, filename)
                 # Count the keywords in the PDF
-                keyword_counts = count_keywords_in_pdf(pdf_path, search_terms)
+                keyword_counts, total_words = count_keywords_in_pdf(pdf_path, search_terms)
                 # Write the results for the current PDF file to the CSV
-                row = [filename] + [keyword_counts[term] for term in term_names]
+                row = [filename, total_words]
+                for term in term_names:
+                    count = keyword_counts[term]
+                    row += [
+                        count,
+                        1 if count else 0,
+                        round(count / total_words, 6) if total_words else 0.0,
+                    ]
                 writer.writerow(row)
 
 
