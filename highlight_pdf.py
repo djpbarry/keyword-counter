@@ -1,12 +1,30 @@
 import csv
 import os
+import re
 
 import fitz  # PyMuPDF
+
+
+# Search terms that are stems (prefixes) rather than complete words. These
+# match any whole word beginning with the stem (e.g. "microscop" matches
+# "microscope" and "microscopy"). All other terms match whole words exactly.
+STEM_TERMS = {"microscop", "comput", "fluoresc", "statistic", "program", "imag"}
 
 
 def count_keywords_in_pdf(pdf_path, search_terms):
     document = fitz.open(pdf_path)
     keyword_counts = {term: 0 for term in search_terms}
+
+    # Compile one regex per term: stems match whole words sharing the
+    # prefix; all other terms match the whole word exactly.
+    patterns = {
+        term: re.compile(
+            rf"\b{re.escape(term.lower())}\w*"
+            if term.lower() in STEM_TERMS
+            else rf"\b{re.escape(term.lower())}\b"
+        )
+        for term in search_terms
+    }
 
     # Loop through each page in the PDF
     for page in document:
@@ -14,7 +32,8 @@ def count_keywords_in_pdf(pdf_path, search_terms):
         if text:
             text = text.lower()  # Convert the page text to lowercase
             for term in search_terms:
-                keyword_counts[term] += text.count(term.lower())  # Count occurrences (case-insensitive)
+                # Count whole-word occurrences (case-insensitive)
+                keyword_counts[term] += len(patterns[term].findall(text))
 
     document.close()
     return keyword_counts
@@ -40,7 +59,7 @@ def analyze_folder(folder_path, search_terms, output_csv):
 
 
 # Example usage
-folder_path = "D:/OneDrive - The Francis Crick Institute/Sandwich Students/2025/CVs"  # Folder containing PDF files
+folder_path = "D:/OneDrive - The Francis Crick Institute/Sandwich Students/2027/CVs"  # Folder containing PDF files
 search_terms = ['cell', 'FIJI', 'CellProfiler', 'microscop', 'python', 'matlab', 'code', 'coding', 'script', 'data',
                 'analysis', 'comput', 'model', 'fluoresc', 'slide', 'rstudio', 'graphpad', 'prism', 'statistic',
                 'program', 'machine', 'learning', 'imag']

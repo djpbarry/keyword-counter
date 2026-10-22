@@ -73,5 +73,11 @@ badly. Examples from the current term list:
 
 ## Status
 
-None of the above is implemented yet. A sensible first increment is items
-1–3 (regex word boundaries + consistent terms + text normalization).
+- [x] Item 1 (regex word boundaries) implemented in
+      `highlight_pdf.py:count_keywords_in_pdf`. A `STEM_TERMS` set
+      (`highlight_pdf.py:11`) marks which terms are prefixes vs whole words;
+      stems use `\bterm\w*`, everything else uses `\bterm\b`. This is a
+      partial step toward item 2 (the stem/word split is hardcoded rather
+      than encoded per-term).
+- [ ] Items 2–7 remain open. A sensible next increment is items 2–3
+      (consistent term encoding + text normalization).
