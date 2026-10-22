@@ -90,4 +90,9 @@ badly. Examples from the current term list:
 - [x] Item 5 (phrase support) implemented: a third term kind `"phrase"`
       matches multi-word terms exactly (`\bphrase\b`); `machine learning` was
       added as a phrase term.
-- [ ] Items 6–7 remain open (OCR fallback, per-file error handling).
+- [x] Item 6 (OCR) deliberately not implemented. Instead of rendering scanned
+      PDFs for OCR, unreadable PDFs (no extractable text) are flagged as
+      `status = unreadable` in the CSV and skipped; no OCR dependency added.
+- [x] Item 7 (error handling) implemented: each PDF is processed in a
+      `try/except`; corrupt/encrypted files are logged to stderr, flagged as
+      `status = error`, and the batch continues.

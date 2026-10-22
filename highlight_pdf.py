@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+import sys
 
 import pymupdf as fitz
 
@@ -51,11 +52,11 @@ def analyze_folder(folder_path, search_terms, output_csv):
     # Prepare the CSV file to store the results
     with open(output_csv, mode='w', newline='') as file:
         writer = csv.writer(file)
-        # Write the header row: filename, total word count, then for each
-        # term a raw count, a 0/1 "mentioned" flag, and a density (count /
-        # total words) so results can be compared across CVs of different
-        # lengths.
-        header = ['filename', 'total_words']
+        # Write the header row: filename, status, total word count, then for
+        # each term a raw count, a 0/1 "mentioned" flag, and a density
+        # (count / total words) so results can be compared across CVs of
+        # different lengths.
+        header = ['filename', 'status', 'total_words']
         for term in term_names:
             header += [term, term + '_mentioned', term + '_density']
         writer.writerow(header)
@@ -64,10 +65,21 @@ def analyze_folder(folder_path, search_terms, output_csv):
         for filename in os.listdir(folder_path):
             if filename.endswith('.pdf'):
                 pdf_path = os.path.join(folder_path, filename)
-                # Count the keywords in the PDF
-                keyword_counts, total_words = count_keywords_in_pdf(pdf_path, search_terms)
+                try:
+                    # Count the keywords in the PDF
+                    keyword_counts, total_words = count_keywords_in_pdf(pdf_path, search_terms)
+                except Exception as exc:
+                    # Corrupt or encrypted PDF: flag it and carry on
+                    print(f"Skipping {filename}: {exc}", file=sys.stderr)
+                    row = [filename, 'error', 0]
+                    row += [0, 0, 0.0] * len(term_names)
+                    writer.writerow(row)
+                    continue
+
+                # No extractable text means the PDF is likely a scanned image
+                status = 'unreadable' if total_words == 0 else 'ok'
                 # Write the results for the current PDF file to the CSV
-                row = [filename, total_words]
+                row = [filename, status, total_words]
                 for term in term_names:
                     count = keyword_counts[term]
                     row += [
@@ -88,6 +100,7 @@ search_terms = [
     ('cell', 'word'),
     ('FIJI', 'word'),
     ('CellProfiler', 'word'),
+    ('CellProfiler', 'phrase'),
     ('microscop', 'stem'),
     ('python', 'word'),
     ('matlab', 'word'),
@@ -105,8 +118,6 @@ search_terms = [
     ('prism', 'word'),
     ('statistic', 'stem'),
     ('program', 'stem'),
-    ('machine', 'word'),
-    ('learning', 'word'),
     ('machine learning', 'phrase'),
     ('imag', 'stem'),
 ]

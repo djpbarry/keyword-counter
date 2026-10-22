@@ -63,8 +63,9 @@ in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
    terms use `\bterm\w*`, `word` and `phrase` terms use `\bterm\b` (phrases
    may contain spaces, already collapsed by normalization). The function
    returns `(keyword_counts, total_words)`.
-4. `analyze_folder` writes one row per file: `filename`, `total_words`, and
-   per term a raw `count`, a `0/1` `*_mentioned` flag, and a `*_density`
+4. `analyze_folder` writes one row per file: `filename`, a `status`
+   (`ok` / `unreadable` / `error`), `total_words`, and per term a raw
+   `count`, a `0/1` `*_mentioned` flag, and a `*_density`
    (`count / total_words`).
 
 ## Gotchas (non-obvious)
@@ -86,6 +87,10 @@ in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
 - **`.idea/` is untracked and not ignored.** `.gitignore` only ignores
   `.pixi/*` (except `config.toml`). PyCharm project files may show up as
   untracked; don't commit them.
+- **Unreadable and corrupt PDFs are flagged, not fatal.** PDFs with no
+  extractable text (likely scanned images) get `status = unreadable`; corrupt
+  or encrypted PDFs get `status = error` and are logged to stderr. The batch
+  continues past both.
 - **No `pymupdf`/`fitz` in `default` env** — always target `scanner` (see
   Commands).
 - The script has no `if __name__ == "__main__"` guard; importing it runs the
