@@ -97,7 +97,6 @@ folder_path = "D:/OneDrive - The Francis Crick Institute/Sandwich Students/2027/
 # "phrase" (match a multi-word phrase exactly). Order determines the CSV
 # column order.
 search_terms = [
-    ('cell', 'word'),
     ('FIJI', 'word'),
     ('CellProfiler', 'word'),
     ('Cell Profiler', 'phrase'),
@@ -117,8 +116,6 @@ search_terms = [
     ('git', 'stem'),
     ('docker', 'word'),
     ('script', 'word'),
-    ('data', 'word'),
-    ('analysis', 'word'),
     ('segmentation', 'word'),
     ('comput', 'stem'),
     ('model', 'word'),
@@ -128,7 +125,7 @@ search_terms = [
     ('graphpad', 'word'),
     ('prism', 'word'),
     ('statistic', 'stem'),
-    ('program', 'stem'),
+    ('programming', 'word'),
     ('machine learning', 'phrase'),
     ('deep learning', 'phrase'),
     ('neural network', 'phrase'),
