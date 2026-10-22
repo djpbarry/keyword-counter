@@ -20,16 +20,16 @@ def count_keywords_in_pdf(pdf_path, search_terms):
     keyword_counts = {term: 0 for term, _ in search_terms}
     total_words = 0
 
-    # Compile one regex per term: stems match whole words sharing the
-    # prefix; whole words match the word exactly.
-    patterns = {
-        term: re.compile(
-            rf"\b{re.escape(term.lower())}\w*"
-            if kind == "stem"
-            else rf"\b{re.escape(term.lower())}\b"
-        )
-        for term, kind in search_terms
-    }
+    # Compile one regex per term. "stem" terms match any whole word with the
+    # term as a prefix; "word" and "phrase" terms match exactly (phrases may
+    # contain spaces, which normalization has collapsed to single spaces).
+    patterns = {}
+    for term, kind in search_terms:
+        escaped = re.escape(term.lower())
+        if kind == "stem":
+            patterns[term] = re.compile(rf"\b{escaped}\w*")
+        else:
+            patterns[term] = re.compile(rf"\b{escaped}\b")
 
     # Loop through each page in the PDF
     for page in document:
@@ -81,8 +81,9 @@ def analyze_folder(folder_path, search_terms, output_csv):
 # Example usage
 folder_path = "D:/OneDrive - The Francis Crick Institute/Sandwich Students/2027/CVs"  # Folder containing PDF files
 # Search terms as (term, kind) pairs. kind is "stem" (match any whole word
-# starting with the term) or "word" (match the whole word exactly). Order
-# determines the CSV column order.
+# starting with the term), "word" (match the whole word exactly), or
+# "phrase" (match a multi-word phrase exactly). Order determines the CSV
+# column order.
 search_terms = [
     ('cell', 'word'),
     ('FIJI', 'word'),
@@ -106,6 +107,7 @@ search_terms = [
     ('program', 'stem'),
     ('machine', 'word'),
     ('learning', 'word'),
+    ('machine learning', 'phrase'),
     ('imag', 'stem'),
 ]
 output_csv = "keyword_counts.csv"

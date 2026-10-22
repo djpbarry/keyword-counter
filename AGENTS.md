@@ -60,8 +60,9 @@ in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
    page through `normalize_text` (joins hyphenated line breaks, collapses
    whitespace, expands ligatures) before lowercasing.
 3. Each term is matched with a compiled regex built from its kind: `stem`
-   terms use `\bterm\w*`, `word` terms use `\bterm\b`. The function returns
-   `(keyword_counts, total_words)`.
+   terms use `\bterm\w*`, `word` and `phrase` terms use `\bterm\b` (phrases
+   may contain spaces, already collapsed by normalization). The function
+   returns `(keyword_counts, total_words)`.
 4. `analyze_folder` writes one row per file: `filename`, `total_words`, and
    per term a raw `count`, a `0/1` `*_mentioned` flag, and a `*_density`
    (`count / total_words`).
@@ -73,12 +74,12 @@ in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
   (`highlight_pdf.py:56-85`), not CLI args or a config file. `folder_path`
   is an absolute OneDrive path that must exist on the machine running the
   script. To change inputs/outputs, edit these values directly.
-- **Stem vs word matching is explicit.** `search_terms` is a list of
-  `(term, kind)` tuples where `kind` is `"stem"` or `"word"`
-  (`highlight_pdf.py:60`). Stems match any whole word starting with the term
-  (`\bterm\w*`), words match exactly (`\bterm\b`). This means plurals and
-  other suffixes are NOT matched for `word` terms: e.g. `script` will not
-  match "scripts", `analysis` will not match "analyses".
+- **Stem vs word vs phrase matching is explicit.** `search_terms` is a list
+  of `(term, kind)` tuples where `kind` is `"stem"`, `"word"`, or `"phrase"`
+  (`highlight_pdf.py:86`). Stems match any whole word starting with the term
+  (`\bterm\w*`); words and phrases match exactly (`\bterm\b`). This means
+  plurals and other suffixes are NOT matched for `word` terms: e.g. `script`
+  will not match "scripts", `analysis` will not match "analyses".
 - **Stale lockfile.** `pixi.lock` is currently untracked and does not yet
   reflect the `pymupdf` addition (no `pymupdf` entry). Run `pixi install`
   or `pixi update` to regenerate it after dependency changes.

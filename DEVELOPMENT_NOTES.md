@@ -87,5 +87,7 @@ badly. Examples from the current term list:
       now also returns `total_words`, and the CSV writes three columns per
       term — raw `count`, `*_mentioned` (0/1), and `*_density`
       (`count / total_words`) — plus a `total_words` column.
-- [ ] Items 5–7 remain open (phrase support, OCR fallback, per-file error
-      handling).
+- [x] Item 5 (phrase support) implemented: a third term kind `"phrase"`
+      matches multi-word terms exactly (`\bphrase\b`); `machine learning` was
+      added as a phrase term.
+- [ ] Items 6–7 remain open (OCR fallback, per-file error handling).
