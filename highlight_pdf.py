@@ -2,7 +2,7 @@ import csv
 import os
 import re
 
-import fitz  # PyMuPDF
+import pymupdf as fitz
 
 
 def count_keywords_in_pdf(pdf_path, search_terms):
