@@ -5,25 +5,19 @@ import re
 import fitz  # PyMuPDF
 
 
-# Search terms that are stems (prefixes) rather than complete words. These
-# match any whole word beginning with the stem (e.g. "microscop" matches
-# "microscope" and "microscopy"). All other terms match whole words exactly.
-STEM_TERMS = {"microscop", "comput", "fluoresc", "statistic", "program", "imag"}
-
-
 def count_keywords_in_pdf(pdf_path, search_terms):
     document = fitz.open(pdf_path)
-    keyword_counts = {term: 0 for term in search_terms}
+    keyword_counts = {term: 0 for term, _ in search_terms}
 
     # Compile one regex per term: stems match whole words sharing the
-    # prefix; all other terms match the whole word exactly.
+    # prefix; whole words match the word exactly.
     patterns = {
         term: re.compile(
             rf"\b{re.escape(term.lower())}\w*"
-            if term.lower() in STEM_TERMS
+            if kind == "stem"
             else rf"\b{re.escape(term.lower())}\b"
         )
-        for term in search_terms
+        for term, kind in search_terms
     }
 
     # Loop through each page in the PDF
@@ -31,7 +25,7 @@ def count_keywords_in_pdf(pdf_path, search_terms):
         text = page.get_text("text")  # Extract the text from the page
         if text:
             text = text.lower()  # Convert the page text to lowercase
-            for term in search_terms:
+            for term, _ in search_terms:
                 # Count whole-word occurrences (case-insensitive)
                 keyword_counts[term] += len(patterns[term].findall(text))
 
@@ -40,12 +34,12 @@ def count_keywords_in_pdf(pdf_path, search_terms):
 
 
 def analyze_folder(folder_path, search_terms, output_csv):
+    term_names = [term for term, _ in search_terms]
     # Prepare the CSV file to store the results
     with open(output_csv, mode='w', newline='') as file:
         writer = csv.writer(file)
         # Write the header row: filename + search terms
-        header = ['filename'] + search_terms
-        writer.writerow(header)
+        writer.writerow(['filename'] + term_names)
 
         # Loop through all PDF files in the folder
         for filename in os.listdir(folder_path):
@@ -54,15 +48,40 @@ def analyze_folder(folder_path, search_terms, output_csv):
                 # Count the keywords in the PDF
                 keyword_counts = count_keywords_in_pdf(pdf_path, search_terms)
                 # Write the results for the current PDF file to the CSV
-                row = [filename] + [keyword_counts[term] for term in search_terms]
+                row = [filename] + [keyword_counts[term] for term in term_names]
                 writer.writerow(row)
 
 
 # Example usage
 folder_path = "D:/OneDrive - The Francis Crick Institute/Sandwich Students/2027/CVs"  # Folder containing PDF files
-search_terms = ['cell', 'FIJI', 'CellProfiler', 'microscop', 'python', 'matlab', 'code', 'coding', 'script', 'data',
-                'analysis', 'comput', 'model', 'fluoresc', 'slide', 'rstudio', 'graphpad', 'prism', 'statistic',
-                'program', 'machine', 'learning', 'imag']
+# Search terms as (term, kind) pairs. kind is "stem" (match any whole word
+# starting with the term) or "word" (match the whole word exactly). Order
+# determines the CSV column order.
+search_terms = [
+    ('cell', 'word'),
+    ('FIJI', 'word'),
+    ('CellProfiler', 'word'),
+    ('microscop', 'stem'),
+    ('python', 'word'),
+    ('matlab', 'word'),
+    ('code', 'word'),
+    ('coding', 'word'),
+    ('script', 'word'),
+    ('data', 'word'),
+    ('analysis', 'word'),
+    ('comput', 'stem'),
+    ('model', 'word'),
+    ('fluoresc', 'stem'),
+    ('slide', 'word'),
+    ('rstudio', 'word'),
+    ('graphpad', 'word'),
+    ('prism', 'word'),
+    ('statistic', 'stem'),
+    ('program', 'stem'),
+    ('machine', 'word'),
+    ('learning', 'word'),
+    ('imag', 'stem'),
+]
 output_csv = "keyword_counts.csv"
 
 analyze_folder(folder_path, search_terms, output_csv)
