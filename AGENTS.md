@@ -53,8 +53,10 @@ in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
 
 `highlight_pdf.py` is the only source file. Data flow:
 
-1. `analyze_folder(folder_path, search_terms, output_csv)` opens the output
-   CSV, writes a header row, then iterates over every `*.pdf` in the folder.
+1. `analyze_folder(folder_path, search_terms, output_csv)` makes two passes:
+   first it processes every `*.pdf` in the folder and collects results
+   (flagging `unreadable`/`error` files); then it computes a rarity weight
+   per term from document frequency before writing the CSV.
 2. For each PDF, `count_keywords_in_pdf(pdf_path, search_terms)` opens it
    with `fitz`, extracts `page.get_text("text")` per page, and feeds each
    page through `normalize_text` (joins hyphenated line breaks, collapses
@@ -64,9 +66,12 @@ in `.pixi/envs/scanner`, not in `.pixi/envs/default`. Running against
    may contain spaces, already collapsed by normalization). The function
    returns `(keyword_counts, total_words)`.
 4. `analyze_folder` writes one row per file: `filename`, a `status`
-   (`ok` / `unreadable` / `error`), `total_words`, and per term a raw
+   (`ok` / `unreadable` / `error`), `total_words`, a binary `score` (number
+   of mentioned terms), a rarity-weighted `weighted_score`
+   (`sum(1 + log10(N/df))` over mentioned terms), and per term a raw
    `count`, a `0/1` `*_mentioned` flag, and a `*_density`
-   (`count / total_words`).
+   (`count / total_words`). The rarity weights are computed over `ok` files
+   only.
 
 ## Gotchas (non-obvious)
 
