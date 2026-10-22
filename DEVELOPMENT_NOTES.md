@@ -80,5 +80,8 @@ badly. Examples from the current term list:
       list of `(term, kind)` tuples with `kind` in `{"stem", "word"}`
       (`highlight_pdf.py:60`). The kind is read in `count_keywords_in_pdf`
       and `analyze_folder`; the separate `STEM_TERMS` set was removed.
-- [ ] Items 3–7 remain open. A sensible next increment is item 3 (text
-      normalization) plus item 4 (presence vs frequency).
+- [x] Item 3 (text normalization) implemented as `normalize_text`
+      (`highlight_pdf.py:8`), called before matching: joins hyphenated line
+      breaks, collapses whitespace, and expands `ﬁ`/`ﬂ` ligatures.
+- [ ] Items 4–7 remain open. A sensible next increment is item 4
+      (presence vs frequency).

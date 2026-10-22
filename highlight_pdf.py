@@ -5,6 +5,16 @@ import re
 import pymupdf as fitz
 
 
+def normalize_text(text):
+    # Join words split across lines by a hyphen (e.g. "micro-\nscope").
+    text = re.sub(r"-\s*\n\s*", "", text)
+    # Collapse all whitespace (including PDF line breaks) to single spaces.
+    text = re.sub(r"\s+", " ", text)
+    # Expand common typographic ligatures to their ASCII equivalents.
+    text = text.replace("\ufb01", "fi").replace("\ufb02", "fl")
+    return text
+
+
 def count_keywords_in_pdf(pdf_path, search_terms):
     document = fitz.open(pdf_path)
     keyword_counts = {term: 0 for term, _ in search_terms}
@@ -24,7 +34,8 @@ def count_keywords_in_pdf(pdf_path, search_terms):
     for page in document:
         text = page.get_text("text")  # Extract the text from the page
         if text:
-            text = text.lower()  # Convert the page text to lowercase
+            # Lowercase and normalize before matching
+            text = normalize_text(text.lower())
             for term, _ in search_terms:
                 # Count whole-word occurrences (case-insensitive)
                 keyword_counts[term] += len(patterns[term].findall(text))
